@@ -1,64 +1,53 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
-import {
-  Activity
-} from "lucide-react";
 
-import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-
-
+import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import Header from "@/components/Header";
-import Link from "next/link";
 import SideBar from "@/components/SideBar";
-import EventExtractor from "@/components/EventExtractor";
+import EventExtractor from "@/components/CalenderAI/EventExtractor";
+import EmailAgent from "@/components/EmailAI/EmailAgent";
+import { Grid, Typography, Box, Button } from "@mui/material";
+import { BotMessageSquare, Mail, Calendar, Activity } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
+import HrRecruitmentAgent from "@/components/HRAI/HrRecruitmentAgent";
+import { alpha } from "@mui/material/styles";
 
 export default function Dashboard() {
   const [theme, setTheme] = useState("dark");
-  const [systemStatus, setSystemStatus] = useState(85);
-  const [cpuUsage, setCpuUsage] = useState(42);
-  const [memoryUsage, setMemoryUsage] = useState(68);
-  const [networkStatus, setNetworkStatus] = useState(92);
-  const [securityLevel, setSecurityLevel] = useState(75);
-  const [currentTime, setCurrentTime] = useState(new Date());
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
+  const [activeAgent, setActiveAgent] = useState(null);
+
+  lightenColor = (color, percent) => {
+    const amount = Math.round((percent / 100) * 255);
+    return alpha(color, 0.7);
+  };
+
+  const agents = [
+    {
+      id: "email",
+      title: "Email Agent",
+      icon: <Mail size={24} />,
+      color: "#8b5cf6",
+      component: <EmailAgent />,
+    },
+    {
+      id: "calendar",
+      title: "Calendar Agent",
+      icon: <Calendar size={24} />,
+      color: "#0ea5e9",
+      component: <EventExtractor />,
+    },
+    {
+      id: "hr",
+      title: "hr Agent",
+      icon: <BotMessageSquare size={24} />,
+      color: "#ec4899",
+      component: <HrRecruitmentAgent />,
+    },
+  ];
 
   const canvasRef = useRef(null);
-
-  // Simulate data loading
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-    }, 2000);
-
-    return () => clearTimeout(timer);
-  }, []);
-
-  // Update time
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setCurrentTime(new Date());
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, []);
-
-  // Simulate changing data
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setCpuUsage(Math.floor(Math.random() * 30) + 30);
-      setMemoryUsage(Math.floor(Math.random() * 20) + 60);
-      setNetworkStatus(Math.floor(Math.random() * 15) + 80);
-      setSystemStatus(Math.floor(Math.random() * 10) + 80);
-    }, 3000);
-
-    return () => clearInterval(interval);
-  }, []);
 
   // Particle effect
   useEffect(() => {
@@ -138,19 +127,31 @@ export default function Dashboard() {
     };
   }, []);
 
-  
+  function lightenColor(color, percent) {
+    const num = parseInt(color.replace("#", ""), 16);
+    const amt = Math.round(2.55 * percent);
+    const R = (num >> 16) + amt;
+    const G = ((num >> 8) & 0x00ff) + amt;
+    const B = (num & 0x0000ff) + amt;
+    return `#${(
+      0x1000000 +
+      (R < 255 ? (R < 1 ? 0 : R) : 255) * 0x10000 +
+      (G < 255 ? (G < 1 ? 0 : G) : 255) * 0x100 +
+      (B < 255 ? (B < 1 ? 0 : B) : 255)
+    )
+      .toString(16)
+      .slice(1)}`;
+  }
 
   return (
     <div
       className={`${theme} min-h-screen bg-gradient-to-br from-black to-slate-900 text-slate-100 relative overflow-hidden pb-40`}
     >
-      {/* Background particle effect */}
       <canvas
         ref={canvasRef}
         className="absolute inset-0 w-full h-full opacity-30"
       />
 
-      {/* Loading overlay */}
       {isLoading && (
         <div className="absolute inset-0 bg-black/80 flex items-center justify-center z-50">
           <div className="flex flex-col items-center">
@@ -166,7 +167,6 @@ export default function Dashboard() {
       )}
 
       <div className="container mx-auto p-4 relative z-10">
-        {/* Header */}
         <Header />
 
         {/* Main content */}
@@ -178,23 +178,143 @@ export default function Dashboard() {
           <div className="col-span-12 md:col-span-9 lg:col-span-10">
             <div className="grid gap-6">
               {/* System overview */}
-              <Card className="bg-slate-900/50 border-slate-700/50 backdrop-blur-sm overflow-hidden">
+              <Card className="bg-slate-900/50 border-slate-700/50 backdrop-blur-sm overflow-hidden flex items-center justify-between">
                 <CardHeader className="border-b border-slate-700/50 pb-3">
                   <div className="flex items-center justify-between">
                     <CardTitle className="text-slate-100 flex items-center">
                       <Activity className="mr-2 h-5 w-5 text-cyan-500" />
                       Agent Builder
                     </CardTitle>
-                    
                   </div>
                 </CardHeader>
-                <Card className={'m-10'}>
-                <EventExtractor/>
-                </Card>
-                
+                <Grid
+                  container
+                  spacing={3}
+                  sx={{
+                    width: "100%",
+                    p: 2,
+                    display: "flex",
+                    justifyContent: "center",
+                    alignItems: "center",
+                  }}
+                >
+                  {activeAgent ? (
+                    <Grid item xs={12}>
+                      <Box
+                        sx={{
+                          display: "flex",
+                          justifyContent: "flex-start",
+                          mb: 3,
+                        }}
+                      >
+                        <Button
+                          onClick={() => setActiveAgent(null)}
+                          variant="outlined"
+                          sx={{
+                            border: "2px solid #0ea5e9",
+                            color: "#0ea5e9",
+                            backgroundColor: "transparent",
+                            boxShadow: "0 0 8px rgba(14, 165, 233, 0.5)",
+                            transition: "all 0.3s ease",
+                            "&:hover": {
+                              backgroundColor: "rgba(14, 165, 233, 0.1)",
+                              boxShadow: "0 0 15px rgba(14, 165, 233, 0.8)",
+                              border: "2px solid #0ea5e9",
+                            },
+                            "&:active": {
+                              transform: "scale(0.98)",
+                            },
+                            padding: "8px 16px",
+                            fontWeight: "medium",
+                          }}
+                        >
+                          BACK
+                        </Button>
+                      </Box>
+                      {agents.find((a) => a.id === activeAgent)?.component}
+                    </Grid>
+                  ) : (
+                    <>
+                      {agents.map((agent) => (
+                        <Grid
+                          item
+                          size={{ xs: 12, sm: 6, md: 4 }}
+                          key={agent.id}
+                          p={2}
+                        >
+                          <Card
+                            onClick={() => setActiveAgent(agent.id)}
+                            sx={{
+                              p: 2,
+                              backgroundColor: "#0f172a",
+                              borderRadius: "12px",
+                              border: `2px solid ${agent.color}`,
+                              boxShadow: `0 0 10px ${agent.color}`,
+                              transition: "all 0.3s ease",
+                              cursor: "pointer",
+                              position: "relative",
+                              overflow: "hidden",
+                              height: "100%",
+                              display: "flex",
+                              flexDirection: "column",
+                              justifyContent: "center",
+                              alignItems: "center",
+                              textAlign: "center",
+                              minHeight: "200px",
+                              "&:hover": {
+                                transform: "translateY(-5px)",
+                                boxShadow: `0 0 20px ${agent.color}`,
+                                "&::before": {
+                                  opacity: 0.3,
+                                },
+                              },
+                              "&::before": {
+                                content: '""',
+                                position: "absolute",
+                                top: 0,
+                                left: 0,
+                                right: 0,
+                                bottom: 0,
+                                background: `radial-gradient(circle at center, ${agent.color} 0%, transparent 70%)`,
+                                opacity: 0,
+                                transition: "opacity 0.3s ease",
+                                zIndex: 0,
+                              },
+                            }}
+                          >
+                            <Box sx={{ color: agent.color, mb: 2, zIndex: 1 }}>
+                              {agent.icon}
+                            </Box>
+                            <Typography
+                              variant="h6"
+                              sx={{
+                                fontWeight: "bold",
+                                background: `linear-gradient(to right, ${
+                                  agent.color
+                                }, ${lightenColor(agent.color, 20)})`,
+                                WebkitBackgroundClip: "text",
+                                WebkitTextFillColor: "transparent",
+                                mb: 1,
+                                zIndex: 1,
+                              }}
+                            >
+                              {agent.title}
+                            </Typography>
+                            <Typography
+                              variant="body2"
+                              sx={{ color: "#94a3b8", zIndex: 1 }}
+                            >
+                              Click to activate {agent.title.toLowerCase()}
+                            </Typography>
+                          </Card>
+                          ;
+                        </Grid>
+                      ))}
+                    </>
+                  )}
+                </Grid>
               </Card>
             </div>
-            
           </div>
         </div>
       </div>
