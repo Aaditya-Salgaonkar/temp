@@ -7,12 +7,13 @@ import Header from "@/components/Header";
 import SideBar from "@/components/SideBar";
 import EventExtractor from "@/components/CalenderAI/EventExtractor";
 import EmailAgent from "@/components/EmailAI/EmailAgent";
-import { Grid, Typography, Box, Button } from "@mui/material";
+import { Grid, Typography, Box } from "@mui/material";
 import { BotMessageSquare, Mail, Calendar, Activity } from "lucide-react";
 import { ArrowLeft } from "lucide-react";
 import HrRecruitmentAgent from "@/components/HRAI/HrRecruitmentAgent";
 import { alpha } from "@mui/material/styles";
-
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
 export default function Dashboard() {
   const [theme, setTheme] = useState("dark");
   const [isLoading, setIsLoading] = useState(false);
@@ -187,6 +188,8 @@ export default function Dashboard() {
                     </CardTitle>
                   </div>
                 </CardHeader>
+                  <Link href={'/'}><Button>Create an AI Agent</Button></Link>
+
                 <Grid
                   container
                   spacing={3}
@@ -307,7 +310,7 @@ export default function Dashboard() {
                               Click to activate {agent.title.toLowerCase()}
                             </Typography>
                           </Card>
-                          ;
+                          
                         </Grid>
                       ))}
                     </>

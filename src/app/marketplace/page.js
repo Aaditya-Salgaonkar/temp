@@ -1,106 +1,101 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import { createClient } from "@supabase/supabase-js";
-import { Activity } from "lucide-react";
+import { Activity, Loader2 } from "lucide-react";
 
-import { Card, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import Header from "@/components/Header";
 import SideBar from "@/components/SideBar";
-import Tile from "@/components/Tile";
 import supabase from "../../../supabase";
+
+import { ShoppingCart, Users, BadgeCheck } from "lucide-react";
+import Tile from "@/components/Tile"; // Import Tile component
+
 export default function Dashboard() {
-  const [aiAgents, setAiAgents] = useState([]);
+  const [data, setData] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  const canvasRef = useRef(null);
 
-  // Dummy AI Agents Data
-  const dummyData = [
-    {
-      id: 1,
-      name: "AI Content Generator",
-      developer: "Nikola",
-      price: "49.99",
-      description: "An advanced AI-powered content generator for automated blogging.",
-    },
-    {
-      id: 2,
-      name: "AI Chatbot",
-      developer: "Elon",
-      price: "19.99",
-      description: "A smart chatbot for customer support and automation.",
-    },
-    {
-      id: 3,
-      name: "AI Stock Predictor",
-      developer: "Warren",
-      price: "99.99",
-      description: "Predict stock trends using AI models.",
-    },
-    {
-      id: 4,
-      name: "AI Code Reviewer",
-      developer: "Ada",
-      price: "29.99",
-      description: "AI-powered tool for reviewing and optimizing code.",
-    },
-  ];
-
-  // Fetch AI Agents from Supabase
   useEffect(() => {
-    async function fetchAiAgents() {
+    async function fetchData() {
       setIsLoading(true);
-      const { data, error } = await supabase.from("agents").select("*");
 
-      if (error) {
-        console.error("Error fetching data:", error);
-      } else {
-        setAiAgents(data.length ? data : dummyData); // Use dummy data if empty
-      }
+      // Fetch agents
+      const { data: agents, error: agentsError } = await supabase
+        .from("agents")
+        .select("*");
+
+      // Fetch marketplace items
+      const { data: marketplace, error: marketplaceError } = await supabase
+        .from("marketplace")
+        .select("*");
+
+      if (agentsError) console.error("Error fetching agents:", agentsError);
+      if (marketplaceError) console.error("Error fetching marketplace:", marketplaceError);
+
+      // Merge agents & marketplace by `agent_id`
+      const mergedData = marketplace.map((item) => {
+        const agent = agents.find((a) => a.id === item.agent_id);
+        return {
+          ...item,
+          agent_name: agent ? agent.name : "Unknown Agent",
+          agent_type: agent ? agent.agent_type : "N/A",
+          finetuning_data: agent ? agent.finetuning_data : "N/A",
+        };
+      });
+
+      setData(mergedData);
       setIsLoading(false);
     }
 
-    fetchAiAgents();
+    fetchData();
   }, []);
 
   return (
-    <div className="dark min-h-screen bg-gradient-to-br from-black to-slate-900 text-slate-100 relative overflow-hidden">
-      {/* Background particle effect */}
-      <canvas ref={canvasRef} className="absolute inset-0 w-full h-full opacity-30" />
-
-      {/* Loading overlay */}
+    <div className="dark min-h-screen bg-gradient-to-br from-black to-slate-900 text-slate-100 relative">
+      
+      {/* Loading Screen */}
       {isLoading && (
-        <div className="absolute inset-0 bg-black/80 flex items-center justify-center z-50">
-          <div className="text-lg">Loading AI Agents...</div>
+        <div className="absolute inset-0 bg-black/80 flex flex-col items-center justify-center z-50">
+          <Loader2 className="animate-spin text-cyan-400 h-10 w-10" />
+          <p className="mt-2 text-lg">Fetching Marketplace Data...</p>
         </div>
       )}
 
       <div className="container mx-auto p-4 relative z-10">
         <Header />
-
+        
         <div className="grid grid-cols-12 gap-6">
           <SideBar />
 
           <div className="col-span-12 md:col-span-9 lg:col-span-10">
-            <Card className="bg-slate-900/50 border-slate-700/50 backdrop-blur-sm overflow-hidden">
+            <Card className="bg-slate-900/50 border-slate-700/50 backdrop-blur-lg overflow-hidden shadow-lg">
               <CardHeader className="border-b border-slate-700/50 pb-3">
                 <CardTitle className="text-slate-100 flex items-center text-3xl">
                   <Activity className="mr-2 h-5 w-5 text-cyan-500" />
-                  Marketplace
+                  Marketplace Items
                 </CardTitle>
               </CardHeader>
 
-              <div className="grid grid-cols-2 gap-4 p-4">
-                {aiAgents.map((agent) => (
-                  <Tile
-                    key={agent.id}
-                    name={agent.name}
-                    developer={agent.developer}
-                    price={agent.price}
-                    description={agent.description}
-                  />
-                ))}
-              </div>
+              {/* Display Items */}
+              <CardContent className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 p-6">
+                {data.length > 0 ? (
+                  data.map((item) => (
+                    <Tile
+  key={item.id}
+  name={item.category || "Unnamed Product"} // Ensuring name is not empty
+  developer={item.agent_name}
+  price={item.price}
+  description={`Agent Type: ${item.agent_type} | Fine-Tuning Data: ${item.finetuning_data}`}
+/>
+                  ))
+                ) : (
+                  <p className="text-center text-gray-400 col-span-3">
+                    No marketplace items found.
+                  </p>
+                )}
+              </CardContent>
+
             </Card>
           </div>
         </div>
