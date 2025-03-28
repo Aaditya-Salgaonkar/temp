@@ -19,20 +19,17 @@ export default function Dashboard() {
   const [theme, setTheme] = useState("dark");
 
 
-  const handleProductRemove = async (id) => {
-    console.log("Deleting product with ID:", id);
-  
-    const { error } = await supabase.from("marketplace").delete().eq("id", id);
-  
-    if (error) {
-      console.error("Error removing item:", error.message);
-      return;
-    }
-  
-    console.log("Product deleted successfully");
-    fetchData();
-  };
-  
+const handleProductRemove = async (id) => {
+  const { error } = await supabase.from("marketplace").delete().eq("id", id);
+
+  if (error) {
+    console.error("Error removing item:", error);
+    return;
+  }
+
+  // Refresh marketplace data after deletion
+  fetchData();
+};
 
   useEffect(() => {
     async function fetchData() {
@@ -217,7 +214,7 @@ export default function Dashboard() {
     data.map((item) => (
       <Tile
         key={item.id}
-        name={item.category || "Unnamed Product"}
+        name={item.agent_name || "Unnamed Product"}
         developer={item.agent_name}
         price={item.price}
         description={`Agent Type: ${item.agent_type} `}

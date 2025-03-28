@@ -82,7 +82,7 @@ export default function Tile({ name, developer, price, description, isOwner, pro
 
   return (
     <div className="p-4 bg-gray-800 rounded-lg shadow-lg">
-      <h2 className="text-lg font-bold">{developer || "Unnamed Product"}</h2>
+      <h2 className="text-lg font-bold">{name|| "Unnamed Product"}</h2>
       <p className="text-white mt-2">{description}</p>
       <p className="text-cyan-500 mt-2 font-bold">₹{price}</p>
 
