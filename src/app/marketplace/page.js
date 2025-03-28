@@ -217,7 +217,7 @@ const handleProductRemove = async (id) => {
         name={item.category || "Unnamed Product"}
         developer={item.agent_name}
         price={item.price}
-        description={`Agent Type: ${item.agent_type} | Fine-Tuning Data: ${item.finetuning_data}`}
+        description={`Agent Type: ${item.agent_type} `}
         isOwner={item.isOwner} // Pass ownership flag
         onRemove={() => handleProductRemove(item.id)}
       />
