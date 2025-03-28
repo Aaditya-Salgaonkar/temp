@@ -3,401 +3,402 @@ import React, { useState, useEffect } from "react";
 import EmailAgentService from "./emailAgentService";
 import { gapi } from "gapi-script";
 import { CheckCircle2, Clock, Mail, Send, Bot } from "lucide-react";
-import { Card, Typography, Button, TextField, Grid, Box } from "@mui/material";
-
-// IMPORTANT: Move these to environment variables in production
-const CLIENT_ID =
-  "608829134548-k8skvvh5bo9cgh9savt95l28j47iqdi9.apps.googleusercontent.com";
-const API_KEY = "AIzaSyDAsj4Ya-34WgI5qu9zZ-qrf0dNa-ZuueQ";
-const DISCOVERY_DOCS = [
-  "https://www.googleapis.com/discovery/v1/apis/gmail/v1/rest",
-];
-const SCOPES = "https://www.googleapis.com/auth/gmail.send";
-
-const agent = new EmailAgentService("AIzaSyDouKGIdQVnVXJg7AFTH36mehk6n25RAfg");
-
-const TimelineStep = ({
-  icon: Icon,
-  title,
-  description,
-  isActive,
-  isCompleted,
-}) => {
-  return (
-    <Box
-      sx={{
-        display: "flex",
-        alignItems: "center",
-        mb: 2,
-        transition: "all 0.5s ease-in-out",
-        opacity: isActive ? 1 : 0.5,
-      }}
-    >
-      <Box sx={{ mr: 2, color: isCompleted ? "#10b981" : "#64748b" }}>
-        <Icon size={24} />
-      </Box>
-      <Box>
-        <Typography
-          variant="subtitle1"
-          sx={{ fontWeight: "medium", color: isActive ? "#ffffff" : "#94a3b8" }}
-        >
-          {title}
-        </Typography>
-        {isActive && (
-          <Typography
-            variant="body2"
-            sx={{ color: "#94a3b8", animation: "pulse 2s infinite" }}
-          >
-            {description}
-          </Typography>
-        )}
-      </Box>
-    </Box>
-  );
-};
+import {
+  Card,
+  Typography,
+  Button,
+  TextField,
+  Grid,
+  Box,
+  Divider,
+  CircularProgress,
+} from "@mui/material";
 
 const EmailAgent = () => {
+  // Configuration (move to env in production)
+  const CLIENT_ID =
+    "608829134548-k8skvvh5bo9cgh9savt95l28j47iqdi9.apps.googleusercontent.com";
+  const API_KEY = "AIzaSyDAsj4Ya-34WgI5qu9zZ-qrf0dNa-ZuueQ";
+  const DISCOVERY_DOCS = [
+    "https://www.googleapis.com/discovery/v1/apis/gmail/v1/rest",
+  ];
+  const SCOPES = "https://www.googleapis.com/auth/gmail.send";
+
+  // State
   const [input, setInput] = useState("");
-  const [response, setResponse] = useState("");
   const [isSignedIn, setIsSignedIn] = useState(false);
   const [error, setError] = useState(null);
   const [status, setStatus] = useState("idle");
   const [activeStep, setActiveStep] = useState(0);
-  const [completedSteps, setCompletedSteps] = useState([]);
+  const [loading, setLoading] = useState(false);
+
+  const agent = new EmailAgentService(
+    "AIzaSyDouKGIdQVnVXJg7AFTH36mehk6n25RAfg"
+  );
 
   const steps = [
     {
       icon: Clock,
-      title: "Analyzing Prompt",
-      description: "Processing your input to generate an email...",
-      key: "analyzing",
+      title: "Analyzing",
+      description: "Processing your email request...",
+      color: "#8b5cf6",
     },
     {
       icon: Mail,
-      title: "Generating Email",
-      description: "Creating a professional email response...",
-      key: "generating",
+      title: "Generating",
+      description: "Creating professional email content...",
+      color: "#7c3aed",
     },
     {
       icon: Send,
-      title: "Sending Email",
-      description: "Sending the email to the recipient...",
-      key: "sending",
+      title: "Sending",
+      description: "Delivering your message...",
+      color: "#6d28d9",
     },
     {
       icon: CheckCircle2,
-      title: "Email Sent",
-      description: "Your email has been successfully sent!",
-      key: "completed",
+      title: "Complete",
+      description: "Email successfully sent!",
+      color: "#10b981",
     },
   ];
 
-  // Initialize Google API client on component mount
+  // Initialize Google API
   useEffect(() => {
-    const initGapiClient = () => {
-      gapi.load("client:auth2", async () => {
-        try {
-          await gapi.client.init({
-            apiKey: API_KEY,
-            clientId: CLIENT_ID,
-            discoveryDocs: DISCOVERY_DOCS,
-            scope: SCOPES,
-          });
+    const initClient = async () => {
+      try {
+        await gapi.client.init({
+          apiKey: API_KEY,
+          clientId: CLIENT_ID,
+          discoveryDocs: DISCOVERY_DOCS,
+          scope: SCOPES,
+        });
 
-          const authInstance = gapi.auth2.getAuthInstance();
-          setIsSignedIn(authInstance.isSignedIn.get());
+        const auth = gapi.auth2.getAuthInstance();
+        setIsSignedIn(auth.isSignedIn.get());
 
-          // Listen for sign-in state changes
-          authInstance.isSignedIn.listen((signedIn) => {
-            setIsSignedIn(signedIn);
-          });
-        } catch (err) {
-          console.error("Error initializing Google API client", err);
-          setError("Failed to initialize Google API client");
-        }
-      });
+        auth.isSignedIn.listen(setIsSignedIn);
+      } catch (err) {
+        console.error("Google API init error:", err);
+        setError("Failed to initialize email service");
+      }
     };
 
     if (window.gapi) {
-      initGapiClient();
-    } else {
-      console.warn("Google API script not loaded. Make sure to include it.");
-      setError("Google API script not loaded");
+      gapi.load("client:auth2", initClient);
     }
   }, []);
 
-  // Handle user sign-in
-  const handleSignIn = () => {
-    const authInstance = gapi.auth2.getAuthInstance();
-    authInstance.signIn().then(() => {
-      setIsSignedIn(true);
-      console.log("User signed in.");
-    });
+  const handleAuth = () => {
+    const auth = gapi.auth2.getAuthInstance();
+    isSignedIn ? auth.signOut() : auth.signIn();
   };
 
-  // Handle user sign-out
-  const handleSignOut = () => {
-    const authInstance = gapi.auth2.getAuthInstance();
-    authInstance.signOut().then(() => {
-      setIsSignedIn(false);
-      console.log("User signed out.");
-    });
-  };
+  const handleSubmit = async () => {
+    if (!input.trim()) {
+      setError("Please enter your email content");
+      return;
+    }
 
-  // Handle email generation and sending
-  const handleGenerateAndSend = async () => {
-    const emailId = "aadityasalgaonkar@gmail.com";
+    setLoading(true);
+    setError(null);
+    setStatus("processing");
+    setActiveStep(0);
+
     try {
-      setStatus("analyzing");
+      // Step 1: Analyze
       setActiveStep(0);
-      setCompletedSteps([]);
+      const emailContent = await agent.generateResponse(input);
 
-      const generatedResponse = await agent.generateResponse(input);
-      setResponse(generatedResponse);
-
-      setStatus("generating");
+      // Step 2: Generate
       setActiveStep(1);
-      setCompletedSteps([0]);
+      const subject =
+        emailContent.match(/Subject:\s*(.+)/i)?.[1] || "Your Message";
+      const body = emailContent.match(/Email body:\s*([\s\S]+)/i)?.[1] || input;
 
-      // Extract subject and body from the generated response
-      const subjectMatch = generatedResponse.match(/Subject:\s*(.+)/i);
-      const bodyMatch = generatedResponse.match(/Email body:\s*([\s\S]+)/i);
-      const subject = subjectMatch ? subjectMatch[1].trim() : "No Subject";
-      const body = bodyMatch ? bodyMatch[1].trim() : "No Email Body";
-
-      setStatus("sending");
+      // Step 3: Send
       setActiveStep(2);
-      setCompletedSteps([0, 1]);
+      await sendEmail("aadityasalgaonkar@gmail.com", subject, body);
 
-      // Send the email using Gmail API
-      await sendEmail(emailId, subject, body);
-
-      setStatus("completed");
+      // Complete
       setActiveStep(3);
-      setCompletedSteps([0, 1, 2]);
+      setStatus("complete");
+      setInput("");
     } catch (err) {
-      console.error("Error generating or sending email:", err);
-      setError("Failed to generate or send email.");
+      console.error("Email error:", err);
+      setError(err.message || "Failed to process email");
+      setStatus("error");
+    } finally {
+      setLoading(false);
     }
   };
 
-  // Function to send email using Gmail API
-  const sendEmail = async (recipient, subject, body) => {
-    const email = [`To: ${recipient}`, `Subject: ${subject}`, "", body].join(
-      "\n"
-    );
+  const sendEmail = async (to, subject, body) => {
+    const email = [`To: ${to}`, `Subject: ${subject}`, "", body].join("\n");
 
-    const encodedMessage = btoa(email)
+    const base64Email = btoa(email)
       .replace(/\+/g, "-")
       .replace(/\//g, "_")
       .replace(/=+$/, "");
 
-    try {
-      await gapi.client.gmail.users.messages.send({
-        userId: "me",
-        resource: {
-          raw: encodedMessage,
-        },
-      });
-    } catch (err) {
-      console.error("Error sending email via Gmail API:", err);
-      throw err;
-    }
+    await gapi.client.gmail.users.messages.send({
+      userId: "me",
+      resource: { raw: base64Email },
+    });
   };
 
   return (
     <Card
       sx={{
-        p: 3,
+        p: 4,
         width: "100%",
         maxWidth: "600px",
         backgroundColor: "#0f172a",
         borderRadius: "12px",
-        border: "2px solid #8b5cf6", // Purple border for Email Agent
-        boxShadow: "0 0 10px #8b5cf6",
-        transition: "transform 0.3s ease, box-shadow 0.3s ease",
+        border: "2px solid #7c3aed",
+        boxShadow: "0 0 15px rgba(124, 58, 237, 0.5)",
+        transition: "all 0.3s ease",
         "&:hover": {
-          transform: "translateY(-5px)",
-          boxShadow: "0 0 20px #8b5cf6",
+          boxShadow: "0 0 25px rgba(124, 58, 237, 0.8)",
         },
       }}
     >
-      {/* Header with icon */}
+      {/* Header */}
       <Box
         sx={{
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",
-          pl: 1,
-          pr: 1,
-          mb: 1,
+          mb: 3,
         }}
       >
         <Typography
           variant="h5"
           sx={{
             fontWeight: "bold",
-            background: "linear-gradient(to right, #8b5cf6, #c084fc)", // Purple gradient
+            background: "linear-gradient(to right, #8b5cf6, #c084fc)",
             WebkitBackgroundClip: "text",
             WebkitTextFillColor: "transparent",
+            textShadow: "0 0 8px rgba(139, 92, 246, 0.4)",
           }}
         >
           Email Agent
         </Typography>
         <Bot
           size={36}
-          color="#8b5cf6" // Purple icon
+          color="#8b5cf6"
           style={{
-            filter: "drop-shadow(0 0 4px rgba(139, 92, 246, 0.7))",
+            filter: "drop-shadow(0 0 6px rgba(139, 92, 246, 0.7))",
           }}
         />
       </Box>
 
-      <Typography variant="body2" sx={{ mb: 2, color: "#94a3b8" }}>
-        Automatically generate and send professional emails from simple prompts.
+      <Typography
+        variant="body2"
+        sx={{
+          mb: 3,
+          color: "#94a3b8",
+          textShadow: "0 0 4px rgba(148, 163, 184, 0.3)",
+        }}
+      >
+        Create and send professional emails instantly
       </Typography>
 
-      {/* Sign-in/Sign-out buttons */}
-
-      {/* Input field */}
+      {/* Email Input */}
       <TextField
+        fullWidth
+        multiline
+        rows={6}
         value={input}
         onChange={(e) => setInput(e.target.value)}
-        placeholder="Type your email prompt..."
-        multiline
-        rows={4}
-        fullWidth
+        placeholder="Describe the email you want to send..."
         sx={{
-          mb: 2,
+          mb: 3,
           "& .MuiOutlinedInput-root": {
             color: "#e2e8f0",
             backgroundColor: "#1e293b",
-            borderRadius: "8px",
             "& fieldset": {
               borderColor: "#334155",
+              transition: "all 0.3s ease",
             },
             "&:hover fieldset": {
-              borderColor: "#8b5cf6",
+              borderColor: "#7c3aed",
+              boxShadow: "0 0 0 2px rgba(124, 58, 237, 0.2)",
             },
             "&.Mui-focused fieldset": {
               borderColor: "#8b5cf6",
-              boxShadow: "0 0 0 2px rgba(139, 92, 246, 0.2)",
+              boxShadow: "0 0 0 3px rgba(139, 92, 246, 0.3)",
             },
           },
-          "& .MuiInputBase-input::placeholder": {
-            color: "#94a3b8",
-            opacity: 1,
+          "& .MuiInputBase-input": {
+            "&::placeholder": {
+              color: "#94a3b8",
+              opacity: 1,
+            },
           },
         }}
       />
 
-      {/* Generate and Send button */}
-      <Grid spacing={3} container sx={{ mb: 2 }}>
-        <Grid item xs={12} md sx={{ display: "flex", flexGrow: 1 }}>
-          <Button
-            fullWidth
-            variant="contained"
-            onClick={handleGenerateAndSend}
-            disabled={!isSignedIn || !input}
+      {/* Action Buttons */}
+      <Box
+        sx={{
+          display: "flex",
+          gap: 2,
+          mb: 3,
+        }}
+      >
+        <Button
+          fullWidth
+          variant="contained"
+          onClick={handleSubmit}
+          disabled={!isSignedIn || loading || !input.trim()}
+          startIcon={
+            loading ? (
+              <CircularProgress size={20} color="inherit" />
+            ) : (
+              <Send size={20} />
+            )
+          }
+          sx={{
+            height: 44,
+            background: "linear-gradient(to right, #7c3aed, #8b5cf6)",
+            color: "white",
+            "&:hover": {
+              background: "linear-gradient(to right, #8b5cf6, #7c3aed)",
+              boxShadow: "0 0 15px rgba(124, 58, 237, 0.6)",
+            },
+            "&:disabled": {
+              background: "#334155",
+              color: "#64748b",
+            },
+          }}
+        >
+          {loading ? "Processing..." : "Send Email"}
+        </Button>
+
+        <Button
+          fullWidth
+          variant={isSignedIn ? "outlined" : "contained"}
+          onClick={handleAuth}
+          color={isSignedIn ? "error" : "success"}
+          sx={{
+            height: 44,
+            borderWidth: 2,
+            "&:hover": {
+              borderWidth: 2,
+              boxShadow: isSignedIn
+                ? "0 0 12px rgba(239, 68, 68, 0.4)"
+                : "0 0 12px rgba(16, 185, 129, 0.4)",
+            },
+          }}
+        >
+          {isSignedIn ? "Sign Out" : "Sign In"}
+        </Button>
+      </Box>
+
+      {/* Status Timeline */}
+      {status !== "idle" && (
+        <Box
+          sx={{
+            p: 3,
+            backgroundColor: "#1e293b",
+            borderRadius: "12px",
+            borderLeft: "4px solid #7c3aed",
+            boxShadow: "0 0 8px rgba(124, 58, 237, 0.3)",
+          }}
+        >
+          <Typography
+            variant="h6"
             sx={{
-              height: "44px",
-              minWidth: 0,
-              background: "linear-gradient(to right, #8b5cf6, #c084fc)",
-              color: "#fff",
-              "&:hover": {
-                background: "linear-gradient(to right, #c084fc, #8b5cf6)",
-                boxShadow: "0 0 15px rgba(139, 92, 246, 0.5)",
-              },
-              "&:disabled": {
-                background: "#334155",
-                color: "#64748b",
-              },
+              mb: 2,
+              color: "#e2e8f0",
+              textAlign: "center",
+              textShadow: "0 0 6px rgba(226, 232, 240, 0.3)",
             }}
           >
-            Generate and Send Email
-          </Button>
-        </Grid>
-        <Grid item xs={12} md="auto" sx={{ display: "flex", flexGrow: 1 }}>
-          {!isSignedIn ? (
-            <Button
-              fullWidth
-              variant="contained"
-              onClick={handleSignIn}
-              sx={{
-                height: "44px",
-                minWidth: 0,
-                backgroundColor: "#10b981",
-                color: "#fff",
-                "&:hover": {
-                  backgroundColor: "#059669",
-                  boxShadow: "0 0 15px rgba(16, 185, 129, 0.5)",
-                },
-              }}
-            >
-              Sign in with Google
-            </Button>
-          ) : (
-            <Button
-              fullWidth
-              variant="contained"
-              onClick={handleSignOut}
-              sx={{
-                height: "44px",
-                minWidth: 0,
-                backgroundColor: "#ef4444",
-                color: "#fff",
-                "&:hover": {
-                  backgroundColor: "#dc2626",
-                  boxShadow: "0 0 15px rgba(239, 68, 68, 0.5)",
-                },
-              }}
-            >
-              Sign out
-            </Button>
-          )}
-        </Grid>
-      </Grid>
+            Email Status
+          </Typography>
 
+          <Divider
+            sx={{
+              borderColor: "#334155",
+              mb: 2,
+              boxShadow: "0 0 4px rgba(51, 65, 85, 0.5)",
+            }}
+          />
+
+          <Box sx={{ pl: 2, borderLeft: "2px solid #334155" }}>
+            {steps.map((step, index) => (
+              <Box
+                key={index}
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  mb: 2,
+                  opacity: activeStep >= index ? 1 : 0.5,
+                  transition: "all 0.3s ease",
+                }}
+              >
+                <Box
+                  sx={{
+                    mr: 2,
+                    color: activeStep > index ? "#10b981" : step.color,
+                    filter:
+                      activeStep >= index
+                        ? `drop-shadow(0 0 6px ${step.color}80)`
+                        : "none",
+                    transition: "all 0.3s ease",
+                  }}
+                >
+                  <step.icon size={24} />
+                </Box>
+                <Box>
+                  <Typography
+                    variant="subtitle1"
+                    sx={{
+                      fontWeight: "medium",
+                      color: "#e2e8f0",
+                      textShadow:
+                        activeStep >= index
+                          ? `0 0 4px ${step.color}80`
+                          : "none",
+                    }}
+                  >
+                    {step.title}
+                  </Typography>
+                  {activeStep === index && (
+                    <Typography
+                      variant="body2"
+                      sx={{
+                        color: "#94a3b8",
+                        animation: "pulse 2s infinite",
+                        textShadow: "0 0 4px rgba(148, 163, 184, 0.3)",
+                      }}
+                    >
+                      {step.description}
+                    </Typography>
+                  )}
+                </Box>
+              </Box>
+            ))}
+          </Box>
+        </Box>
+      )}
+
+      {/* Error Display */}
       {error && (
         <Box
           sx={{
             mt: 2,
             p: 2,
-            backgroundColor: "#fee2e2",
-            color: "#b91c1c",
-            borderRadius: "6px",
+            backgroundColor: "#1e293b",
+            color: "#ef4444",
+            borderRadius: "8px",
+            borderLeft: "4px solid #ef4444",
+            boxShadow: "0 0 8px rgba(239, 68, 68, 0.3)",
           }}
         >
           <Typography variant="body2">{error}</Typography>
-        </Box>
-      )}
-
-      {status !== "idle" && (
-        <Box
-          sx={{
-            mt: 3,
-            p: 3,
-            backgroundColor: "#1e293b",
-            borderRadius: "8px",
-            borderLeft: "4px solid #8b5cf6",
-          }}
-        >
-          <Typography
-            variant="h6"
-            sx={{ mb: 2, color: "#ffffff", textAlign: "center" }}
-          >
-            Email Sending Process
-          </Typography>
-          <Box sx={{ pl: 2, borderLeft: "2px solid #334155" }}>
-            {steps.map((step, index) => (
-              <TimelineStep
-                key={step.key}
-                {...step}
-                isActive={activeStep === index}
-                isCompleted={completedSteps.includes(index)}
-              />
-            ))}
-          </Box>
         </Box>
       )}
     </Card>

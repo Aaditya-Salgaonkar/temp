@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import EventExtractorService from "./EventExtractorService";
+import EventExtractorService from "./CalenderAI/EventExtractorService";
 import { gapi } from "gapi-script";
 import { CheckCircle2, Clock, Mail, Send } from "lucide-react";
 
@@ -12,15 +12,35 @@ const DISCOVERY_DOCS = [
 ];
 const SCOPES = "https://www.googleapis.com/auth/calendar.events";
 
-const TimelineStep = ({ icon: Icon, title, description, isActive, isCompleted }) => {
+const TimelineStep = ({
+  icon: Icon,
+  title,
+  description,
+  isActive,
+  isCompleted,
+}) => {
   return (
-    <div className={`flex items-center mb-4 transition-all duration-500 ease-in-out ${isActive ? "opacity-100" : "opacity-50"}`}>
-      <div className={`mr-4 ${isCompleted ? "text-green-500" : "text-gray-400"}`}>
+    <div
+      className={`flex items-center mb-4 transition-all duration-500 ease-in-out ${
+        isActive ? "opacity-100" : "opacity-50"
+      }`}
+    >
+      <div
+        className={`mr-4 ${isCompleted ? "text-green-500" : "text-gray-400"}`}
+      >
         <Icon size={24} />
       </div>
       <div>
-        <h3 className={`font-semibold ${isActive ? "text-black" : "text-gray-600"}`}>{title}</h3>
-        {isActive && <p className="text-sm text-gray-500 animate-pulse">{description}</p>}
+        <h3
+          className={`font-semibold ${
+            isActive ? "text-black" : "text-gray-600"
+          }`}
+        >
+          {title}
+        </h3>
+        {isActive && (
+          <p className="text-sm text-gray-500 animate-pulse">{description}</p>
+        )}
       </div>
     </div>
   );
@@ -122,7 +142,9 @@ function EventExtractor() {
       return;
     }
 
-    const service = new EventExtractorService("AIzaSyDouKGIdQVnVXJg7AFTH36mehk6n25RAfg");
+    const service = new EventExtractorService(
+      "AIzaSyDouKGIdQVnVXJg7AFTH36mehk6n25RAfg"
+    );
     setResult(null);
     setError(null);
     setIsLoading(true);
@@ -173,7 +195,9 @@ function EventExtractor() {
   // Function to insert a new event in Google Calendar
   const createCalendarEvent = async (eventDetails) => {
     const startDate = new Date(eventDetails.date);
-    const endDate = new Date(startDate.getTime() + eventDetails.duration_minutes * 60000);
+    const endDate = new Date(
+      startDate.getTime() + eventDetails.duration_minutes * 60000
+    );
 
     const event = {
       summary: eventDetails.name,
@@ -240,11 +264,15 @@ function EventExtractor() {
         {isLoading ? "Processing..." : "Process Event"}
       </button>
 
-      {error && <div className="mt-4 p-2 bg-red-100 text-red-800 rounded">{error}</div>}
+      {error && (
+        <div className="mt-4 p-2 bg-red-100 text-red-800 rounded">{error}</div>
+      )}
 
       {status !== "idle" && (
         <div className="mt-4  p-6 rounded-lg shadow-md">
-          <h2 className="text-xl font-bold mb-4 text-center text-white">Event Creation Process</h2>
+          <h2 className="text-xl font-bold mb-4 text-center text-white">
+            Event Creation Process
+          </h2>
           <div className="relative pl-4 border-l-2 border-gray-200">
             {steps.map((step, index) => (
               <TimelineStep

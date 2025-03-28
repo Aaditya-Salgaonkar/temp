@@ -209,7 +209,7 @@ export default function Dashboard() {
           <SideBar />
           <div className="col-span-12 md:col-span-9 lg:col-span-10">
             <div className="grid gap-6">
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 <Card className="bg-gray-800 border-gray-700">
                   <CardHeader className="flex justify-between items-center">
                     <CardTitle className="flex items-center">

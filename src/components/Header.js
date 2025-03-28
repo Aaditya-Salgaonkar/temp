@@ -48,11 +48,11 @@ export default function Header() {
   };
 
   return (
-    <header className="flex items-center justify-between py-4 border-b border-slate-700/50 mb-6">
+    <header className="flex items-center justify-between pb-4 border-b border-slate-700/50 mb-6">
 
-      <div className="flex items-center space-x-2">
-        <Hexagon className="h-8 w-8 text-cyan-500" />
-        <span className="text-xl font-bold bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">
+      <div className="flex items-center space-x-4">
+        <Hexagon className="h-12 w-12 text-cyan-500" />
+        <span className="text-3xl font-bold bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">
           AgentForge AI
         </span>
       </div>

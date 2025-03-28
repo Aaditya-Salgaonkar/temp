@@ -19,17 +19,20 @@ export default function Dashboard() {
   const [theme, setTheme] = useState("dark");
 
 
-const handleProductRemove = async (id) => {
-  const { error } = await supabase.from("marketplace").delete().eq("id", id);
-
-  if (error) {
-    console.error("Error removing item:", error);
-    return;
-  }
-
-  // Refresh marketplace data after deletion
-  fetchData();
-};
+  const handleProductRemove = async (id) => {
+    console.log("Deleting product with ID:", id);
+  
+    const { error } = await supabase.from("marketplace").delete().eq("id", id);
+  
+    if (error) {
+      console.error("Error removing item:", error.message);
+      return;
+    }
+  
+    console.log("Product deleted successfully");
+    fetchData();
+  };
+  
 
   useEffect(() => {
     async function fetchData() {
