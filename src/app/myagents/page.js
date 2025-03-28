@@ -24,6 +24,7 @@ import { Progress } from "@/components/ui/progress"
 
 export default function Dashboard() {
   const [theme, setTheme] = useState("dark")
+  const [isLoading, setIsLoading] = useState(false);
   const [aiAgents, setAiAgents] = useState([
     { name: "ChatBot Pro", category: "Customer Support", status: "Active", date: "Mar 10, 2025", revenue: 1250, plan: "Premium" },
     { name: "Finance GPT", category: "Finance Advisory", status: "Active", date: "Feb 28, 2025", revenue: 980, plan: "Basic" },
@@ -111,7 +112,19 @@ export default function Dashboard() {
   return (
     <div className={`${theme} min-h-screen bg-gradient-to-br from-black to-slate-900 text-slate-100 relative overflow-hidden`}>
       <canvas ref={canvasRef} className="absolute inset-0 w-full h-full opacity-30" />
-
+      {isLoading && (
+        <div className="absolute inset-0 bg-black/80 flex items-center justify-center z-50">
+          <div className="flex flex-col items-center">
+            <div className="relative w-24 h-24">
+              <div className="absolute inset-0 border-4 border-cyan-500/30 rounded-full animate-ping"></div>
+              <div className="absolute inset-2 border-4 border-t-cyan-500 border-r-transparent border-b-transparent border-l-transparent rounded-full animate-spin"></div>
+              <div className="absolute inset-4 border-4 border-r-purple-500 border-t-transparent border-b-transparent border-l-transparent rounded-full animate-spin-slow"></div>
+              <div className="absolute inset-6 border-4 border-b-blue-500 border-t-transparent border-r-transparent border-l-transparent rounded-full animate-spin-slower"></div>
+              <div className="absolute inset-8 border-4 border-l-green-500 border-t-transparent border-r-transparent border-b-transparent rounded-full animate-spin"></div>
+            </div>
+          </div>
+        </div>
+      )}
       <div className="container mx-auto p-4 relative z-10">
         {/* Header */}
         <Header />
@@ -163,16 +176,19 @@ export default function Dashboard() {
                             <td className="p-3">{agent.plan}</td>
                             <td className="p-3 text-green-400">${agent.revenue}</td>
                             <td className="p-3 flex space-x-2">
-                              <TooltipProvider>
-                                <Tooltip>
-                                  <TooltipTrigger>
-                                    <Button size="icon" variant="ghost" onClick={() => toggleStatus(index)}>
-                                      {agent.status === "Active" ? <XCircle className="text-red-500" /> : <CheckCircle className="text-green-500" />}
-                                    </Button>
-                                  </TooltipTrigger>
-                                  <TooltipContent>{agent.status === "Active" ? "Deactivate" : "Activate"}</TooltipContent>
-                                </Tooltip>
-                              </TooltipProvider>
+                            <TooltipProvider>
+  <Tooltip>
+    <TooltipTrigger asChild>
+      <Button size="icon" variant="ghost" onClick={() => toggleStatus(index)}>
+        {agent.status === "Active" ? <XCircle className="text-red-500" /> : <CheckCircle className="text-green-500" />}
+      </Button>
+    </TooltipTrigger>
+    <TooltipContent>
+      {agent.status === "Active" ? "Deactivate" : "Activate"}
+    </TooltipContent>
+  </Tooltip>
+</TooltipProvider>
+
 
                               <Button size="icon" variant="ghost" onClick={() => removeAgent(index)}>
                                 <Trash2 className="text-red-500" />
